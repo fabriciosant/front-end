@@ -10,6 +10,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarRail,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 
 const data = {
@@ -78,17 +79,13 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
+      <SidebarTrigger className="m-2 cursor-pointer" />
+
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser
-          user={{
-            name: "",
-            email: "",
-            avatar: "",
-          }}
-        />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

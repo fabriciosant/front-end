@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { authService } from '@/services/api';
 import { AxiosError } from 'axios';
+import { Toast } from '@/components/toast'; 
 
 interface User {
   id: number;
@@ -29,7 +30,6 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verificar se há usuário no localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -107,18 +107,54 @@ export const useAuth = () => {
 
   const logout = useCallback(async () => {
     try {
+      // Primeiro tenta fazer logout na API
       await authService.logout();
+      
+      // Remove tokens do localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      
+      // Limpa o estado
+      setUser(null);
+      setError(null);
+      
+      // Mostra toast de sucesso
+      Toast.success({
+        title: "Logout realizado",
+        text: "Você foi desconectado com sucesso",
+        timer: 2000,
+      });
+      
+      return { success: true, message: 'Logout realizado com sucesso' };
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error('Erro ao fazer logout:', err.message);
-      } else {
-        console.error('Erro ao fazer logout:', err);
-      }
-    } finally {
+      // Mesmo se a API falhar, limpa os dados locais
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       setUser(null);
+      
+      let errorMessage = 'Erro ao fazer logout';
+      
+      if (err instanceof AxiosError) {
+        const data = err.response?.data as ErrorResponse;
+        errorMessage = data?.error || data?.errors?.[0] || data?.message || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      // Toast de aviso (não erro, pois ainda limpamos os dados locais)
+      Toast.info({
+        title: "Sessão encerrada localmente",
+        text: "Sua sessão foi encerrada, mas houve um problema ao notificar o servidor",
+        timer: 3000,
+      });
+      
+      return { 
+        success: true, // Ainda consideramos sucesso pois os dados foram limpos
+        message: 'Sessão encerrada localmente',
+        error: errorMessage 
+      };
     }
   }, []);
 
