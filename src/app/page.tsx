@@ -1,8 +1,9 @@
+//src/app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, ArrowLeft } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import LoginForm from "./(auth)/login/login-form";
 import LoginImage from "./(auth)/login/login-image";
 import RegisterForm from "./(auth)/register/register-form";
@@ -59,19 +60,6 @@ export default function Home() {
 
       <div className="absolute bottom-10 right-10 hidden md:block">
         <Sparkles className="w-8 h-8 text-purple-500 animate-spin-slow" />
-      </div>
-
-      {/* Botão de voltar para trocar entre login/register no mobile */}
-      <div className="md:hidden absolute top-4 left-4 z-20">
-        {!isLoginMode && (
-          <button
-            onClick={toggleMode}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Voltar para Login</span>
-          </button>
-        )}
       </div>
 
       <div className="relative flex items-center justify-center min-h-screen p-4">
@@ -140,27 +128,6 @@ export default function Home() {
                 <div className="h-full flex flex-col justify-center p-8">
                   <RegisterImage onSwitchToLogin={toggleMode} />
                 </div>
-              </div>
-            </div>
-
-            {/* Indicador visual para mobile */}
-            <div className="md:hidden absolute bottom-4 left-0 right-0 flex justify-center">
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full">
-                <div className="flex gap-1">
-                  <div
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      isLoginMode ? "bg-blue-600 scale-125" : "bg-gray-300"
-                    }`}
-                  />
-                  <div
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      !isLoginMode ? "bg-emerald-600 scale-125" : "bg-gray-300"
-                    }`}
-                  />
-                </div>
-                <span className="text-xs font-medium text-gray-600">
-                  {isLoginMode ? "Login" : "Registro"}
-                </span>
               </div>
             </div>
           </div>

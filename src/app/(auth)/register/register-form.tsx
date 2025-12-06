@@ -1,26 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  User,
-  Check,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Check, Loader2 } from "lucide-react";
+import { Toast } from "@/components/toast";
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
 
 export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
-  const router = useRouter();
-  const { register, loading, error } = useAuth();
+  const { register, loading, error } = useAuth(); // Removido router daqui
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -73,7 +63,31 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     );
 
     if (result.success) {
-      setTimeout(() => router.push("/dashboard"), 800);
+      // Mostrar toast de sucesso
+      Toast.success({
+        title: "Conta criada com sucesso!",
+        text: "Redirecionando para login...",
+        position: "top-end",
+        timer: 2000,
+      });
+
+      // Limpar o formulário
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        passwordConfirmation: "",
+      });
+
+      setTimeout(() => {
+        onSwitchToLogin();
+      }, 2000);
+    } else if (error) {
+      Toast.error({
+        title: "Falha no cadastro",
+        text: error,
+        timer: 4000,
+      });
     }
   };
 
@@ -100,32 +114,6 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     }));
   };
 
-  const getPasswordStrength = () => {
-    if (!formData.password) return 0;
-    let strength = 0;
-    if (formData.password.length >= 6) strength++;
-    if (/[A-Z]/.test(formData.password)) strength++;
-    if (/[0-9]/.test(formData.password)) strength++;
-    if (/[^A-Za-z0-9]/.test(formData.password)) strength++;
-    return strength;
-  };
-
-  const passwordStrength = getPasswordStrength();
-  const strengthColors = [
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-yellow-500",
-    "bg-green-500",
-    "bg-emerald-500",
-  ];
-  const strengthLabels = [
-    "Muito fraca",
-    "Fraca",
-    "Média",
-    "Forte",
-    "Muito forte",
-  ];
-
   const passwordsMatch =
     formData.password === formData.passwordConfirmation &&
     formData.passwordConfirmation.length > 0;
@@ -133,7 +121,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   return (
     <div className="w-full min-h-full flex flex-col justify-center">
       {/* Header */}
-      <div className="text-center mb-5">
+      <div className="text-center mb-2">
         <div className="relative inline-block mb-2">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-green-600 rounded-full blur-lg opacity-50 animate-pulse" />
           <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-600 to-green-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
@@ -141,40 +129,16 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
           </div>
         </div>
 
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
           Criar Conta
         </h1>
-        <p className="text-gray-600 dark:text-gray-300 mt-1 font-medium">
+        <p className="text-gray-500 dark:text-gray-300 mt-1 font-normal">
           Cadastre-se para começar sua jornada financeira
         </p>
       </div>
 
-      {/* Mensagens de erro */}
-      {(error || Object.values(validationErrors).some((err) => err)) && (
-        <div className="mb-2 p-4 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 rounded-xl animate-shake">
-          {error && (
-            <p className="text-red-600 dark:text-red-400 text-sm font-medium flex items-center mb-2">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              {error}
-            </p>
-          )}
-          {Object.entries(validationErrors).map(
-            ([field, message]) =>
-              message && (
-                <p
-                  key={field}
-                  className="text-red-600 dark:text-red-400 text-sm font-medium flex items-center"
-                >
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  {message}
-                </p>
-              )
-          )}
-        </div>
-      )}
-
       {/* Formulário */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1">
           <label
             htmlFor="email"
@@ -190,8 +154,8 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               required
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-3 pl-11 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900/30 focus:outline-none dark:text-white transition-all duration-300 group-hover:border-emerald-300"
-              placeholder="seu@email.com"
+              className="w-full px-4 py-3 pl-11 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-4xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900/30 focus:outline-none dark:text-white transition-all duration-300 group-hover:border-emerald-300"
+              placeholder="example@email.com"
             />
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
           </div>
@@ -212,7 +176,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               required
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 pl-11 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900/30 focus:outline-none dark:text-white transition-all duration-300 group-hover:border-emerald-300"
+              className="w-full px-4 py-3 pl-11 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-4xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900/30 focus:outline-none dark:text-white transition-all duration-300 group-hover:border-emerald-300"
               placeholder="••••••••"
             />
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
@@ -228,37 +192,6 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               )}
             </button>
           </div>
-
-          {formData.password && (
-            <div className="mt-3 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Força da senha:
-                </span>
-                <span
-                  className={`text-xs font-bold ${
-                    passwordStrength >= 4
-                      ? "text-emerald-600"
-                      : passwordStrength >= 3
-                      ? "text-green-600"
-                      : passwordStrength >= 2
-                      ? "text-yellow-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {strengthLabels[passwordStrength - 1] || strengthLabels[0]}
-                </span>
-              </div>
-              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    strengthColors[passwordStrength - 1] || strengthColors[0]
-                  }`}
-                  style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="space-y-1">
@@ -276,7 +209,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               required
               value={formData.passwordConfirmation}
               onChange={handleChange}
-              className={`w-full px-4 py-3 pl-11 bg-white border-2 rounded-xl focus:ring-4 focus:outline-none dark:text-white transition-all duration-300 group-hover:border-emerald-300 ${
+              className={`w-full px-4 py-3 pl-11 bg-white border-2 rounded-4xl focus:ring-4 focus:outline-none dark:text-white transition-all duration-300 group-hover:border-emerald-300 ${
                 passwordsMatch && formData.passwordConfirmation
                   ? "border-emerald-500 ring-emerald-200"
                   : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
@@ -304,7 +237,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg hover:shadow-xl active:scale-[0.98]"
+          className="w-full relative cursor-pointer overflow-hidden bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold py-3.5 px-4 rounded-4xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg hover:shadow-xl active:scale-[0.98]"
         >
           <div className="relative flex items-center justify-center">
             {loading ? (
@@ -321,10 +254,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       </form>
 
       {/* Link para login - apenas desktop */}
-      <div className="hidden md:flex justify-center mt-8">
+      <div className="flex justify-center mt-8">
         <button
           onClick={onSwitchToLogin}
-          className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors hover:underline"
+          className="text-sm cursor-pointer font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors hover:underline"
         >
           Já tem uma conta? <span className="font-bold">Faça login</span>
         </button>

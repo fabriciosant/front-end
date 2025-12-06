@@ -116,6 +116,36 @@
   --sidebar-ring: oklch(0.446 0.03 256.802);
 }
 
+
+/* Estilos para SweetAlert2 */
+.sweet-alert-popup {
+  border-radius: 12px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.sweet-alert-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.sweet-alert-confirm-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+}
+
+.sweet-alert-cancel-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+}
+
+/* Para toasts */
+.swal2-toast {
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
