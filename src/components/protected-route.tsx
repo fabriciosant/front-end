@@ -1,8 +1,9 @@
 // src/components/protected-route.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,31 +11,20 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("access_token");
-      const user = localStorage.getItem("user");
-
-      if (!token || !user) {
-        router.push("/login");
-      } else {
-        setIsAuthenticated(true);
-      }
-
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, [router]);
+    if (!loading && !isAuthenticated()) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated, router]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+          <h1 className="text-2xl font-semibold text-gray-700 dark:text-gray-300">
             Verificando autenticação...
           </h1>
         </div>
@@ -42,5 +32,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  return isAuthenticated ? <>{children}</> : null;
+  // Se não estiver autenticado, retorna null (será redirecionado pelo useEffect)
+  if (!isAuthenticated()) {
+    return null;
+  }
+
+  return <>{children}</>;
 }

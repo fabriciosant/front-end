@@ -1,10 +1,8 @@
 // src/services/api.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-// Usando variável de ambiente com fallback para desenvolvimento
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
-// Extender a interface do AxiosRequestConfig para incluir _retry
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
@@ -59,7 +57,7 @@ api.interceptors.response.use(
           }
         }
       } catch {
-        // Se o refresh falhar, redirecionar para login
+        // Se o refresh falhar, limpa os dados e redireciona
         if (typeof window !== 'undefined') {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');

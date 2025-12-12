@@ -1,6 +1,14 @@
+// src/app/dashboard/layout.tsx
+import ProtectedRoute from "@/components/protected-route";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/components/theme-provider";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Dashboard principal",
+};
 
 export default function DashboardLayout({
   children,
@@ -8,22 +16,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-br">
-      <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SidebarProvider>
+    <ProtectedRoute>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <SidebarProvider>
+          <div className="flex min-h-screen">
             <AppSidebar />
-            <main className="min-h-screen w-full p-2">
+            <main className="flex-1 min-h-screen p-2">
               <div>{children}</div>
             </main>
-          </SidebarProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+          </div>
+        </SidebarProvider>
+      </ThemeProvider>
+    </ProtectedRoute>
   );
 }

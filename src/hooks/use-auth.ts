@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { authService } from '@/services/api';
 import { AxiosError } from 'axios';
-import { Toast } from '@/components/toast'; 
 
 interface User {
   id: number;
@@ -30,15 +29,28 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('user');
+    const checkAuth = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          localStorage.removeItem('user');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const isAuthenticated = useCallback(() => {
+    // Verifica se existe token e user no localStorage
+    const token = localStorage.getItem('access_token');
+    const user = localStorage.getItem('user');
+    return !!(token && user);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -106,57 +118,28 @@ export const useAuth = () => {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      // Primeiro tenta fazer logout na API
-      await authService.logout();
-      
-      // Remove tokens do localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      
-      // Limpa o estado
-      setUser(null);
-      setError(null);
-      
-      // Mostra toast de sucesso
-      Toast.success({
-        title: "Logout realizado",
-        text: "Você foi desconectado com sucesso",
-        timer: 2000,
-      });
-      
-      return { success: true, message: 'Logout realizado com sucesso' };
-    } catch (err: unknown) {
-      // Mesmo se a API falhar, limpa os dados locais
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      setUser(null);
-      
-      let errorMessage = 'Erro ao fazer logout';
-      
-      if (err instanceof AxiosError) {
-        const data = err.response?.data as ErrorResponse;
-        errorMessage = data?.error || data?.errors?.[0] || data?.message || errorMessage;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
-      // Toast de aviso (não erro, pois ainda limpamos os dados locais)
-      Toast.info({
-        title: "Sessão encerrada localmente",
-        text: "Sua sessão foi encerrada, mas houve um problema ao notificar o servidor",
-        timer: 3000,
-      });
-      
-      return { 
-        success: true, // Ainda consideramos sucesso pois os dados foram limpos
-        message: 'Sessão encerrada localmente',
-        error: errorMessage 
-      };
-    }
-  }, []);
+  try {
+    await authService.logout();
+  } catch {
+    // Ignora erros
+  } finally {
+    // Remove do localStorage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    
+    // Remove cookies
+    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    
+    // Limpa estado
+    setUser(null);
+    setError(null);
+    
+    // Redireciona
+    window.location.href = '/login';
+  }
+}, []);
 
   return {
     user,
@@ -165,6 +148,6 @@ export const useAuth = () => {
     login,
     register,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated
   };
 };

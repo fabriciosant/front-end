@@ -19,7 +19,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const hasShownError = useRef(false); // Para controlar se já mostrou o erro
+  const hasShownError = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +27,13 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
     const result = await login(formData.email, formData.password);
 
-    if (result.success) {
+    if (result.success && result.data) {
+      // Configurar cookies para o middleware
+      document.cookie = `access_token=${result.data.access_token}; path=/; max-age=86400; SameSite=Lax`;
+      document.cookie = `user=${JSON.stringify(
+        result.data.user
+      )}; path=/; max-age=86400; SameSite=Lax`;
+
       setTimeout(() => router.push("/dashboard"), 500);
       Toast.success({
         title: "Bem vindo de Volta!",
@@ -49,7 +55,6 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Reseta o controle de erro quando o usuário começa a digitar
     hasShownError.current = false;
   };
 
