@@ -1,3 +1,4 @@
+//src/app/(auth)/login/login-form.tsx
 "use client";
 
 import { useState, useRef } from "react";
@@ -23,30 +24,32 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    hasShownError.current = false;
 
     const result = await login(formData.email, formData.password);
 
-    if (result.success && result.data) {
-      // Configurar cookies para o middleware
-      document.cookie = `access_token=${result.data.access_token}; path=/; max-age=86400; SameSite=Lax`;
-      document.cookie = `user=${JSON.stringify(
-        result.data.user
-      )}; path=/; max-age=86400; SameSite=Lax`;
-
-      setTimeout(() => router.push("/dashboard"), 500);
+    if (result.success) {
       Toast.success({
-        title: "Bem vindo de Volta!",
-        position: "top-end",
-        timer: 1500,
+        title: "Login realizado!",
+        text: "Redirecionando...",
+        timer: 2000,
       });
-    } else if (result.error && !hasShownError.current) {
-      Toast.error({
-        title: "Falha no login",
-        text: result.error,
-        timer: 4000,
-      });
-      hasShownError.current = true;
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000);
+    } else {
+      if (result.requiresConfirmation) {
+        Toast.warning({
+          title: "Conta não confirmada",
+          text: "Confirme seu email antes de fazer login.",
+          timer: 4000,
+        });
+      } else {
+        Toast.error({
+          title: "Erro no login",
+          text: result.error || "Credenciais inválidas",
+          timer: 4000,
+        });
+      }
     }
   };
 

@@ -12,7 +12,7 @@ import RegisterImage from "./(auth)/register/register-image";
 export default function Home() {
   const router = useRouter();
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [, setIsCheckingAuth] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Verificar autenticação
@@ -35,19 +35,6 @@ export default function Home() {
       setTimeout(() => setIsTransitioning(false), 500);
     }, 50);
   };
-
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h1 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-            Verificando autenticação...
-          </h1>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">

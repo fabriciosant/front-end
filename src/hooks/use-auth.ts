@@ -8,13 +8,17 @@ interface User {
   email: string;
   created_at: string;
   updated_at: string;
+  confirmed_at?: string;
+  confirmation_sent_at?: string;
 }
 
 interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
+  access_token?: string;
+  refresh_token?: string;
   user: User;
   message: string;
+  requires_confirmation?: boolean;
+  confirmation_sent_at?: string;
 }
 
 interface ErrorResponse {
@@ -23,10 +27,20 @@ interface ErrorResponse {
   message?: string;
 }
 
+interface RegisterResult {
+  success: boolean;
+  requiresConfirmation?: boolean;
+  message?: string;
+  error?: string;
+  data?: AuthResponse;
+}
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -47,7 +61,6 @@ export const useAuth = () => {
   }, []);
 
   const isAuthenticated = useCallback(() => {
-    // Verifica se existe token e user no localStorage
     const token = localStorage.getItem('access_token');
     const user = localStorage.getItem('user');
     return !!(token && user);
@@ -59,19 +72,34 @@ export const useAuth = () => {
       setError(null);
       
       const response: AuthResponse = await authService.login({ email, password });
+
+      console.log("Resposta do login:", response);
       
-      localStorage.setItem('access_token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
+      localStorage.setItem('access_token', response.access_token!);
+      localStorage.setItem('refresh_token', response.refresh_token!);
       localStorage.setItem('user', JSON.stringify(response.user));
+
+      const userData = JSON.stringify(response.user);
+      document.cookie = `access_token=${response.access_token}; path=/; max-age=${60 * 60 * 24}`;
+      document.cookie = `user=${encodeURIComponent(userData)}; path=/; max-age=${60 * 60 * 24}`;
       
       setUser(response.user);
       return { success: true, data: response };
     } catch (err: unknown) {
+      console.log("Erro no login:", err);
       let errorMessage = 'Erro ao fazer login';
       
       if (err instanceof AxiosError) {
         const data = err.response?.data as ErrorResponse;
         errorMessage = data?.error || data?.errors?.[0] || data?.message || errorMessage;
+     
+        if (err.response?.status === 422 && data.error?.includes('confirm')) {
+          return {
+            success: false,
+            requiresConfirmation: true,
+            error: errorMessage
+          };
+        }
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -83,23 +111,43 @@ export const useAuth = () => {
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string, passwordConfirmation: string) => {
+  const register = useCallback(async (email: string, password: string, passwordConfirmation: string): Promise<RegisterResult> => {
     try {
       setLoading(true);
       setError(null);
+      setRequiresConfirmation(false);
       
       const response: AuthResponse = await authService.register({
         email,
         password,
         password_confirmation: passwordConfirmation
       });
+    
+      if (response.requires_confirmation) {
+        setRequiresConfirmation(true);
+        setConfirmationEmail(email);
+        
+        return {
+          success: true,
+          requiresConfirmation: true,
+          message: response.message,
+          data: response
+        };
+      }
       
-      localStorage.setItem('access_token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      if (response.access_token && response.refresh_token) {
+        localStorage.setItem('access_token', response.access_token);
+        localStorage.setItem('refresh_token', response.refresh_token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+      }
       
-      setUser(response.user);
-      return { success: true, data: response };
+      return {
+        success: true,
+        requiresConfirmation: false,
+        message: response.message,
+        data: response
+      };
     } catch (err: unknown) {
       let errorMessage = 'Erro ao criar conta';
       
@@ -117,37 +165,94 @@ export const useAuth = () => {
     }
   }, []);
 
+  const confirmAccount = useCallback(async (token: string): Promise<RegisterResult> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.confirmAccount(token);
+      
+      return {
+        success: true,
+        message: response.message || 'Conta confirmada com sucesso!'
+      };
+    } catch (err: unknown) {
+      let errorMessage = 'Erro ao confirmar conta';
+      
+      if (err instanceof AxiosError) {
+        const data = err.response?.data as ErrorResponse;
+        errorMessage = data?.error || data?.errors?.[0] || data?.message || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const resendConfirmation = useCallback(async (email: string): Promise<RegisterResult> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.resendConfirmation(email);
+      
+      return {
+        success: true,
+        message: response.message || 'Email de confirmação reenviado!'
+      };
+    } catch (err: unknown) {
+      let errorMessage = 'Erro ao reenviar confirmação';
+      
+      if (err instanceof AxiosError) {
+        const data = err.response?.data as ErrorResponse;
+        errorMessage = data?.error || data?.errors?.[0] || data?.message || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
-  try {
-    await authService.logout();
-  } catch {
-    // Ignora erros
-  } finally {
-    // Remove do localStorage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    
-    // Remove cookies
-    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    
-    // Limpa estado
-    setUser(null);
-    setError(null);
-    
-    // Redireciona
-    window.location.href = '/login';
-  }
-}, []);
+    try {
+      await authService.logout();
+    } catch {
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      
+      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      
+      setUser(null);
+      setError(null);
+      setRequiresConfirmation(false);
+      setConfirmationEmail(null);
+      
+      window.location.href = '/';
+    }
+  }, []);
 
   return {
     user,
     loading,
     error,
+    requiresConfirmation,
+    confirmationEmail,
     login,
     register,
     logout,
+    confirmAccount,  
+    resendConfirmation, 
     isAuthenticated
   };
 };

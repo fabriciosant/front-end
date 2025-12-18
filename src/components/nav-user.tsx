@@ -44,11 +44,13 @@ export function NavUser() {
   };
 
   const handleLogout = async () => {
-    await logout();
-
-    setTimeout(() => {
+    try {
+      await logout();
       router.push("/");
-    }, 500);
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      router.push("/");
+    }
   };
 
   if (!user) {

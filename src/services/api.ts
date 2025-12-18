@@ -90,6 +90,21 @@ export const authService = {
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
     return response.data;
+  },
+
+  // ADICIONE ESTAS NOVAS FUNÇÕES:
+  confirmAccount: async (token: string) => {
+    const response = await api.post('/confirmation', {
+      confirmation_token: token
+    });
+    return response.data;
+  },
+
+  resendConfirmation: async (email: string) => {
+    const response = await api.post('/confirmation/resend', {
+      email: email
+    });
+    return response.data;
   }
 };
 

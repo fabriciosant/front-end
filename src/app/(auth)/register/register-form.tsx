@@ -10,7 +10,7 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
-  const { register, loading, error } = useAuth(); // Removido router daqui
+  const { register, loading } = useAuth(); // Removido router daqui
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -63,29 +63,36 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     );
 
     if (result.success) {
-      // Mostrar toast de sucesso
-      Toast.success({
-        title: "Conta criada com sucesso!",
-        text: "Redirecionando para login...",
-        position: "top-end",
-        timer: 2000,
-      });
+      if (result.requiresConfirmation) {
+        Toast.success({
+          title: "Conta criada com sucesso!",
+          text: "Enviamos um email de confirmação para sua conta.",
+          position: "top-end",
+          timer: 5000,
+        });
+      } else {
+        Toast.success({
+          title: "Conta criada com sucesso!",
+          text: "Redirecionando para login...",
+          position: "top-end",
+          timer: 2000,
+        });
 
-      // Limpar o formulário
+        setTimeout(() => {
+          onSwitchToLogin();
+        }, 2000);
+      }
+
       setFormData({
         name: "",
         email: "",
         password: "",
         passwordConfirmation: "",
       });
-
-      setTimeout(() => {
-        onSwitchToLogin();
-      }, 2000);
-    } else if (error) {
+    } else if (result.error) {
       Toast.error({
         title: "Falha no cadastro",
-        text: error,
+        text: result.error,
         timer: 4000,
       });
     }
