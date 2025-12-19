@@ -29,8 +29,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
     if (result.success) {
       Toast.success({
-        title: "Login realizado!",
-        text: "Redirecionando...",
+        title: "Bem vindo de Volta!",
         timer: 2000,
       });
       setTimeout(() => {
@@ -45,7 +44,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         });
       } else {
         Toast.error({
-          title: "Erro no login",
+          title: "Falha no login",
           text: result.error || "Credenciais inválidas",
           timer: 4000,
         });
